@@ -1,0 +1,101 @@
+#!/bin/bash
+# Starts and stops BitlBee
+#
+
+
+
+PIDFILE=/var/run/bitlbee/bitlbee.pid
+
+#Create $PID if $PIDFILE exists
+
+start() {
+
+	#Check to see if PID file exists and if it doesn't, start BitlBee
+  if [ ! -f $PIDFILE ]; then
+
+      /usr/sbin/bitlbee -D -u bitlbee -P $PIDFILE
+      sleep 2
+	else
+		echo "It appears that BitlBee is already running."
+
+	fi	
+
+  if [ -f $PIDFILE ]; then
+
+		echo "BitlBee has started"
+
+	else
+		echo "PID file does not exist, this probably means BitlBee didn't start"
+
+  fi
+
+}
+
+stop() {
+	
+	#I can't find a good way to gracefully stop BitlBee, so this will have to do
+  if [ -f $PIDFILE ]; then
+
+      kill -15 $(cat $PIDFILE)
+      sleep 2
+	fi
+
+	if [ "$(pidof bitlbee)" == "$(cat $PIDFILE)" ]; then
+
+	echo "It looks like BitlBee didn't stop properly. You may want to kill the process manually."
+
+	else
+		echo "BitlBee has been stopped."
+            rm -f $PIDFILE
+  fi
+
+}
+
+status() {
+
+	 #Check to see if BitlBee is running stopped, or broken
+  if [ -f $PIDFILE ]; then
+
+      if [ "$(cat $PIDFILE)" == "$(pidof bitlbee)" ]; then
+
+          echo "BitlBee appears to be running just fine."
+
+        else
+          echo "Something strange is going on. The PID in the file $PID is different from the actual PID of BitlBee which is $(pidof bitlbee)"
+
+      fi
+
+    else
+      echo "It looks like BitlBee isn't running"
+ fi
+}
+
+case "$1" in
+start)
+
+	start
+
+;;
+
+stop)
+
+	stop
+	
+;;
+
+restart)
+	stop
+	start
+;;
+
+status)
+
+	status
+
+;;
+
+*)
+
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+esac
